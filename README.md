@@ -204,8 +204,8 @@ python train_model.py
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/BOMMUGOWTHAMSAIREDDY97/DCN-.git
-   cd DCN-
+   git clone https://github.com/BOMMUGOWTHAMSAIREDDY97/ml-qos-network-controller.git
+   cd ml-qos-network-controller
    ```
 
 2. **Create and activate a virtual environment**:
@@ -287,3 +287,4 @@ Through the **CONFIG** panel or `/api/config` REST endpoint, users can tweak:
 ## 📄 License
 
 This project is developed for educational and research purposes under the Data Communication and Networks (DCN) coursework. Feel free to use, adapt, and build upon it.
+
