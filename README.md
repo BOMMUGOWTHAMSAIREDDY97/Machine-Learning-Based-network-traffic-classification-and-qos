@@ -204,8 +204,8 @@ python train_model.py
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/BOMMUGOWTHAMSAIREDDY97/ml-qos-network-controller.git
-   cd ml-qos-network-controller
+   git clone https://github.com/BOMMUGOWTHAMSAIREDDY97/machine-learning-based-network-traffic-classification-and-qos-engine.git
+   cd machine-learning-based-network-traffic-classification-and-qos-engine
    ```
 
 2. **Create and activate a virtual environment**:
