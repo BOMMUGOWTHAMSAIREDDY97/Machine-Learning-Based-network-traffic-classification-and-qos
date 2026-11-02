@@ -65,7 +65,7 @@ def train():
         DecisionTreeClassifier(random_state=42), 
         dt_params, 
         cv=5, 
-        n_jobs=-1
+        n_jobs=1
     )
     dt_grid.fit(X_train, y_train)
     

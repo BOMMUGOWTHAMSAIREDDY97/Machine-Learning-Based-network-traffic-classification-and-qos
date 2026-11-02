@@ -13,3 +13,6 @@ build/
 *.db-journal
 *.db-wal
 *.db-shm
+.idea/
+.vscode/
+*.log

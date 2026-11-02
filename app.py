@@ -2,15 +2,17 @@ from flask import Flask, jsonify, send_from_directory, request as flask_request
 from flask_cors import CORS
 import time
 import math
+import random
 import requests as req_lib
 import os
 import sqlite3
 import psutil
-from dotenv import load_dotenv
+import tempfile
 import joblib
 import pandas as pd
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from dotenv import load_dotenv
 
 load_dotenv()  # Load environment variables before initializing classes
 
@@ -98,6 +100,8 @@ class NetworkState:
         self.active_interface = "Vercel Cloud" if self.on_vercel else "Scanning..."
         
         # Real Traffic Baseline
+        self.current_sent_mbps = 0.0
+        self.current_recv_mbps = 0.0
         self.capacity_mbps = 100.0
         self.current_load_mbps = 0.5 if self.on_vercel else 0.01 
         if not self.on_vercel:
@@ -109,7 +113,6 @@ class NetworkState:
             self.last_net_io = {}
         
         # Use /tmp for DB on Vercel (read-only FS); fall back to project dir locally
-        import tempfile
         if self.on_vercel:
             self.db_path = os.path.join(tempfile.gettempdir(), "network_logs.db")
         else:
@@ -148,7 +151,10 @@ class NetworkState:
                 io2 = psutil.net_io_counters(pernic=True)
                 
                 dt = t2 - t1
-                
+                if dt <= 0:
+                    time.sleep(1)
+                    continue
+
                 # Filter for Wi-Fi or Data (Cellular) interfaces primarily
                 sent_bytes = 0
                 recv_bytes = 0
@@ -214,7 +220,7 @@ class NetworkState:
                     return
                 self.last_log_time = now_ts
 
-            metrics = self.get_current_metrics(internal=True)
+            metrics = self.get_current_metrics()
             if not metrics:
                 return
 
@@ -283,10 +289,9 @@ class NetworkState:
         finally:
             conn.close()
         
-    def get_current_metrics(self, internal=False):
+    def get_current_metrics(self):
         now = time.time()
-        import random
-        
+
         # Consistent locking for both internal and external callers
         try:
             with self.lock:
@@ -493,8 +498,6 @@ class NetworkState:
         except Exception as e:
             print(f"Error in metrics calculation: {e}")
             raise
-        finally:
-            pass
 
         return metrics_data
 
@@ -624,13 +627,11 @@ def get_towers():
 
 @app.route('/')
 def index():
-    import os
     return send_from_directory(os.getcwd(), 'index.html')
 
 @app.route('/api/config', methods=['POST'])
 def update_config():
-    from flask import request
-    data = request.json
+    data = flask_request.json
     if not data:
         return jsonify({"status": "error", "msg": "No data provided"}), 400
     
@@ -679,7 +680,6 @@ def get_dataset():
 @app.route('/api/seed', methods=['POST'])
 def seed_dataset():
     """Inject 24 hours of realistic sample rows (every minute) for demo purposes."""
-    import random, math
     conn = state_manager._get_db_connection()
     if not conn:
         return jsonify({"error": "No DB connection"}), 500
@@ -689,7 +689,7 @@ def seed_dataset():
         base_time = datetime.now(timezone.utc)
         # Generate 144 rows: every 10 minutes over 24 hours (going backwards)
         for i in range(144, 0, -1):
-            t = base_time - __import__('datetime').timedelta(minutes=i * 10)
+            t = base_time - timedelta(minutes=i * 10)
             local_t = t.astimezone()  # convert to local
             time_str = local_t.strftime("%H:%M:%S")
             # Simulate periodic load pattern with sine wave
